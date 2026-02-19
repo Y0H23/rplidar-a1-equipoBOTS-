@@ -24,14 +24,19 @@ def polar_to_xy(pts):
  x, y: arrays numpy en metros
  q: array numpy de calidades (para colorear puntos opcionalmente)
  """
+ #extraemos las calidades de todos los puntos y las guardamos en un array como decimales
  q = np.array([p[0] for p in pts], dtype=float)
+ #extraemos los ángulos, pero los convertimos de grados a radianes porque numpy usa radianes para seno/coseno
  ang = np.deg2rad([p[1] for p in pts])
+ #extraemos las distancias y las dividimos entre 1000 para pasar de milímetros a metros
  r = np.array([p[2] for p in pts], dtype=float) / 1000.0 # mm → m
  # TODO [Visión]: filtrar por rango de distancia y calidad mínima
  # antes de calcular x, y. Puntos fuera de rango distorsionan la vista.
  # Ejemplo:
  # mask = (r > 0.15) & (r < 6.0) & (q >= 10)
  # ang, r, q = ang[mask], r[mask], q[mask]
+
+ #proyección a cartesianas con la coordenada X que es: distancia x coseno del ángulo
  x = r * np.cos(ang)
  y = r * np.sin(ang)
  return x, y, q
