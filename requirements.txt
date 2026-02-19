@@ -1,1 +1,3 @@
-
+rplidar # driver oficial RPLIDAR Python (Roboticia)
+numpy # operaciones vectoriales sobre arrays de puntos
+matplotlib # visualización 2D en tiempo real
