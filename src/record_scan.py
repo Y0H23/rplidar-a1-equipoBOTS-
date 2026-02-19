@@ -44,8 +44,6 @@ def main():
     # Creamos un nombre de archivo único usando timestamp
     # Ejemplo: scan_20260219_153012.csv
     filename = out_dir / f"scan_{time.strftime('%Y%m%d_%H%M%S')}.csv"
-
-   
     
     # Creamos el driver del LIDAR indicando el puerto serie
     driver = LidarDriver(args.port)
@@ -79,10 +77,9 @@ def main():
                 # d = distancia en milímetros
                 for q, a, d in fr.pts:
                     
-                    # TODO [Computación]:
+                 
                     # Aquí se podría añadir decimación si hay demasiados puntos.
-                    # Por ejemplo: guardar solo 1 de cada N puntos
-                    # para reducir tamaño del archivo.
+                    # Por ejemplo guardar solo 1 de cada N puntos para reducir tamaño del archivo.
 
                     # Escribimos una fila en el CSV
                     writer.writerow([
