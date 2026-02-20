@@ -19,24 +19,34 @@ from lidar_driver import LidarDriver # Driver personalizado para comunicarse con
 
 
 def main():
-    
+
     # Creamos el parser para argumentos de línea de comandos
     ap = argparse.ArgumentParser(description='Grabación de escaneo RPLIDAR a CSV')
-    
+
     # Puerto serie obligatorio
     ap.add_argument('--port', required=True, help='Puerto serie')
-    
+
     # Duración de grabación en segundos (por defecto 10)
     ap.add_argument('--seconds', type=int, default=10, help='Duración de la grabación')
-    
+
     # Carpeta donde se guardará el archivo CSV (por defecto "data")
     ap.add_argument('--out', default='data', help='Carpeta de salida')
-    
+
+    # Decimación opcional, por ejemplo 1 = sin decimación
+    ap.add_argument(
+        '--decimation',
+        type=int,
+        default=1,
+        help='Guardar solo 1 de cada N puntos (1 = guardar todos)'
+    )
+
     # Parseamos los argumentos
     args = ap.parse_args()
 
-  
-    
+    # Validación mínima
+    if args.decimation < 1:
+        raise SystemExit('[ERROR] --decimation debe ser >= 1')
+
     # Creamos la carpeta de salida si no existe
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -44,42 +54,44 @@ def main():
     # Creamos un nombre de archivo único usando timestamp
     # Ejemplo: scan_20260219_153012.csv
     filename = out_dir / f"scan_{time.strftime('%Y%m%d_%H%M%S')}.csv"
-    
+
     # Creamos el driver del LIDAR indicando el puerto serie
     driver = LidarDriver(args.port)
 
     # Guardamos el tiempo de inicio
     t0 = time.time()
-    
+
     # Contador total de puntos guardados
     total_pts = 0
 
+    # Contador de puntos vistos para aplicar la decimación
+    seen_pts = 0
+
     print(f'[INFO] Grabando {args.seconds}s → {filename}')
+    print(f'[INFO] Decimación: 1 de cada {args.decimation} puntos')
 
     try:
-        
+
         # Abrimos el archivo en modo escritura
         with filename.open('w', newline='') as f:
-            
+
             # Creamos el escritor CSV
             writer = csv.writer(f)
-            
+
             # Escribimos la cabecera del archivo
             writer.writerow(['t', 'quality', 'angle_deg', 'dist_mm'])
-            
+
             # driver.frames() genera frames continuamente
             for fr in driver.frames():
-                
+
                 # Cada frame contiene múltiples puntos (fr.pts)
-                # Cada punto tiene:
-                # q = calidad
-                # a = ángulo en grados
-                # d = distancia en milímetros
                 for q, a, d in fr.pts:
-                    
-                 
-                    # Aquí se podría añadir decimación si hay demasiados puntos.
-                    # Por ejemplo guardar solo 1 de cada N puntos para reducir tamaño del archivo.
+
+                    # Aplicamos la decimación
+                    # Guardar solo 1 de cada N puntos
+                    seen_pts += 1
+                    if (seen_pts % args.decimation) != 0:
+                        continue
 
                     # Escribimos una fila en el CSV
                     writer.writerow([
@@ -88,21 +100,18 @@ def main():
                         f'{a:.3f}',     # ángulo en grados (3 decimales)
                         f'{d:.1f}'      # distancia en mm (1 decimal)
                     ])
-                    
-                    total_pts += 1  # Incrementamos contador
+
+                    total_pts += 1  # Incrementamos contador de guardados
 
                 # Si ya pasaron los segundos indicados, salimos del bucle
                 if time.time() - t0 >= args.seconds:
                     break
 
     finally:
-       
         # Cerramos el LIDAR correctamente aunque ocurra un error
         driver.shutdown_safe()
 
-
-    
-    print(f'[OK] Guardado: {filename}  ({total_pts} puntos)')
+    print(f'[OK] Guardado: {filename}  ({total_pts} puntos guardados)')
 
 
 # Punto de entrada del script
