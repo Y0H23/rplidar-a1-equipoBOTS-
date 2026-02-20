@@ -55,9 +55,9 @@ Antes de permitir que la FSM pase del estado `INIT` al siguiente, se verifican l
 
 
 ## Visión Artificial: 
-## Interpretación, Filtrado y Visualización en Tiempo Real
+## Interpretación, filtrado y visualización en tiempo real
 
-### 1. Transformación de Datos a Cartesianas
+### 1. Transformación de datos a cartesianas
 El sensor entrega mediciones en coordenadas polares. Para representar el entorno en una pantalla 2D, transformamos los datos utilizando el módulo compartido:
 **Variables de entrada:**
 `quality`: Calidad de la señal de rebote
@@ -66,19 +66,19 @@ El sensor entrega mediciones en coordenadas polares. Para representar el entorno
 **Proyección matemática:**
 Los ángulos se pasan a radianes. Usando el sensor como origen (0,0), calculamos las coordenadas aplicando x = r * cos(θ) e y = r * sin(θ).
 
-### 2. Filtrado de Señal (Engineering Sense)
+### 2. Filtrado de señal "engineering sense"
 Para evitar que valores atípicos (outliers) deformen el mapa de la habitación, se aplica una máscara de filtrado antes de dibujar. Se descartan los puntos si incumplen estas reglas:
 **Distancia mínima:** Se ignoran rebotes físicos muy cercanos (menores a 0.15 m)
 **Distancia máxima:** Se descartan lecturas fuera del rango útil para la vista (mayores a 6.0 m)
 **Calidad mínima:** Se exige un valor de reflectancia mínimo (`q >= 10`)
 
-### 3. Modos de Ejecución e Interfaz
+### 3. Modos de ejecución e interfaz
 La visualización se ha construido con `matplotlib`, utilizando el modo interactivo (`plt.ion()`) para no bloquear el hilo de ejecución. 
 **Con Sensor Físico (`view_live.py`):**
 `Renderizado en vivo`: Se actualiza en cada frame de rotación usando fig.canvas.flush_events()
 `Captura automática`: El script guarda una imagen de evidencia en docs/capturas/live_view.png
 
-**Con Pipeline CSV (`view_live_csv.py`):**
+**Con pipeline CSV (`view_live_csv.py`):**
 `--animate`: Simula el giro del láser dibujando los puntos progresivamente
 `Modo Polar`: Vista alternativa circular de distancia vs ángulo
 `Puntos inválidos`: Los puntos descartados se muestran con un marcador diferente para visualizarlos como ruido
