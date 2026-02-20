@@ -22,9 +22,20 @@ from pathlib import Path             # Para manejar rutas de forma robusta
 from lidar_driver_csv import read_scan_csv
 
 # Funciones del módulo compartido (CONTRATO: no modificar)
-# - is_valid(s): decide si una muestra/punto es válida según el criterio oficial
-# - polar_to_xy(s): convierte coordenadas polares (r, ángulo) a cartesianas (x,y)
 from lidar_processing import is_valid, polar_to_xy
+
+
+def _reject_reason(s) -> str:
+    """
+    Motivo simple de descarte.
+    """
+    if s.ok != 1:
+        return "ok!=1"
+    if s.quality < 20:
+        return "quality<20"
+    if not (0.20 < s.measure_m <= 10.0):
+        return "measure_fuera_rango"
+    return "unknown"
 
 
 def main(csv_in: str, out_dir_str: str):
@@ -40,59 +51,44 @@ def main(csv_in: str, out_dir_str: str):
     out = Path(out_dir_str)
     out.mkdir(parents=True, exist_ok=True)  # crea la carpeta si no existe
 
-    
-    # read_scan_csv() devuelve una lista de "samples" (objetos/estructuras)
-    # que contienen campos como: ok, quality, angle, measure_m (según tu driver)
+    # Si el CSV no existe, parar con error claro
+    csv_path = Path(csv_in)
+    if not csv_path.exists():
+        raise SystemExit(f'[ERROR] No existe el archivo CSV: {csv_in}')
+
+    # read_scan_csv() devuelve una lista de samples (ok, quality, angle, measure_m)
     samples = read_scan_csv(csv_in)
     n = len(samples)  # total de lecturas
 
-   
     # Usamos is_valid(s) del módulo compartido (criterio oficial).
     valid = [s for s in samples if is_valid(s)]
     invalid = [s for s in samples if not is_valid(s)]
 
-    filtered_csv = out / 'filtered_points.csv' # GUARDAR PUNTOS FILTRADOS (VÁLIDOS) A CSV
+    # ── Guardar puntos filtrados ──────────────────────────────────────
+    filtered_csv = out / 'filtered_points.csv'
 
-    # Abrimos el archivo para escribirlo (modo texto UTF-8)
     with filtered_csv.open('w', encoding='utf-8') as f:
-        # Cabecera del CSV de salida
-        # x_m,y_m: coordenadas cartesianas en metros
-        # quality: calidad original
-        # angle_deg: ángulo original en grados
-        # measure_m: distancia/radio original en metros
         f.write('x_m,y_m,quality,angle_deg,measure_m\n')
 
-        # Para cada punto válido:
         for s in valid:
-            # Convertimos de polar a cartesiano
             x, y = polar_to_xy(s)
+            # (Quité el espacio antes del salto de línea para dejar CSV limpio)
+            f.write(f'{x:.6f},{y:.6f},{s.quality},{s.angle:.3f},{s.measure_m:.4f}\n')
 
-            # Guardamos con formato:
-            # x,y con 6 decimales
-            # angle con 3 decimales
-            # measure_m con 4 decimales
-         
-            f.write(f'{x:.6f},{y:.6f},{s.quality},{s.angle:.3f},{s.measure_m:.4f} \n')
+    # Exportar inválidas con motivo 
+    invalid_csv = out / 'invalid_points.csv'
+    with invalid_csv.open('w', encoding='utf-8') as f:
+        f.write('quality,angle_deg,measure_m,ok,reason\n')
+        for s in invalid:
+            reason = _reject_reason(s)
+            f.write(f'{s.quality},{s.angle:.3f},{s.measure_m:.4f},{s.ok},{reason}\n')
 
-   
-    # ok_ratio: porcentaje de muestras con s.ok == 1
-    # si n==0, evitar división por cero
+    # ── Generar informe markdown ──────────────────────────────────────
     ok_ratio = sum(1 for s in samples if s.ok == 1) / n if n else 0
-
-    # valid_ratio: porcentaje que pasa el filtro is_valid
     valid_ratio = len(valid) / n if n else 0
 
-    
     report = out / 'report_scan.md'
 
-    # Escribimos un markdown con:
-    # nombre de archivo de entrada
-    # total de lecturas
-    # ratio de ok==1
-    # ratio de válidas
-    # conteo de inválidas
-    #
-    # Además incluye el criterio de filtrado documentado (según lidar_processing.py)
     report.write_text(
         f"""# Informe de scan CSV
 
@@ -109,11 +105,8 @@ def main(csv_in: str, out_dir_str: str):
 
 ## Archivos generados
 - `{filtered_csv.name}`: nube de puntos válidos (x, y, quality, angle, r)
+- `{invalid_csv.name}`: puntos inválidos con motivo de descarte
 
-## TODO [Computación]
-- Añadir CLI para ajustar umbrales de filtro sin editar el código.
-- Exportar también las inválidas con el motivo de descarte.
-- Añadir logging y control de errores (CSV malformado, rutas inexistentes).
 """,
         encoding='utf-8'
     )
@@ -121,6 +114,7 @@ def main(csv_in: str, out_dir_str: str):
     # MENSAJES POR CONSOLA
     print(f'[OK] Generados:')
     print(f'     {filtered_csv}')
+    print(f'     {invalid_csv}')
     print(f'     {report}')
 
 
