@@ -42,10 +42,15 @@ matplotlib
 Visualización en tiempo real
 
 Linux: python src/view_live.py --port /dev/ttyUSB0
+
 Windows: python src/view_live.py --port COM5
+
 Grabar escaneo: python src/record_scan.py --port /dev/ttyUSB0 --seconds 10
+
 Con decimación opcional: python src/record_scan.py --port /dev/ttyUSB0 --seconds 10 --decimation 5
+
 Se genera: data/scan_YYYYMMDD_HHMMSS.csv
+
 Formato: t, quality, angle_deg, dist_mm
 
 
