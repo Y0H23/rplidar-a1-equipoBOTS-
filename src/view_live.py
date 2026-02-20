@@ -35,13 +35,18 @@ def polar_to_xy(pts):
  # Ejemplo:
  # mask = (r > 0.15) & (r < 6.0) & (q >= 10)
  # ang, r, q = ang[mask], r[mask], q[mask]
-
+#filtramos distancias muy cortas < 0.15m, fuera de rango > 6.0m y de baja calidad < 10
+mask = (r > 0.15) & (r < 6.0) & (q >= 10)
+#ponemos la máscara para quedarnos con los puntos válidos
+ang_valido = ang[mask]
+r_valido = r[mask]
+q_valido = q[mask]
  #proyección a cartesianas con la coordenada X que es: distancia x coseno del ángulo
  x = r * np.cos(ang)
  #proyección a cartesianas con la coordenada Y que es la distancia por el seno del ángulo
  y = r * np.sin(ang)
  #devolvemos las tres matrices, coordenadas X e Y, y la calidad original
- return x, y, q
+ return x, y, q_valido
  
   def main():
    #leemos los parametros
@@ -58,6 +63,9 @@ mostrar (metros)')
  plt.ion() # modo interactivo: no bloquea
  #creamos la figura y los ejes con un tamaño cuadrado 7x7
  fig, ax = plt.subplots(figsize=(7, 7))
+ #creamos la carpeta de destino para las capturas
+ os.makedirs('docs/capturas', exist_ok=True)
+
  #mantenemos proporciones 1:1 para no deformar la vista
  ax.set_aspect('equal', 'box')
  #establecemos los límites de los ejes con en el argumento range
@@ -87,17 +95,28 @@ mostrar (metros)')
  x, y, q = polar_to_xy(fr.pts)
  # Actualizar puntos en el scatter
  scat.set_offsets(np.c_[x, y])
- # Actualizar información en pantalla
+ #calculo de estadisticas de puntos
  frame_count += 1
+ total_puntos = len(fr.pts)
+ puntos_validos = len(x)
+ puntos_invalidos = total_puntos - puntos_validos
+ porcentaje_valido = (puntos_validos / total_puntos) * 100 if total_puntos > 0 else 0
+
+ # Actualizar información en pantalla          
  info_text.set_text(
  f'Frame: {frame_count}\n'
  f'Puntos: {len(fr.pts)}\n'
  # TODO [Visión]: mostrar % válidos/inválidos
+ f'Válidos: {puntos_validos} ({porcentaje_valido:.1f}%)\n'
+ f'Inválidos: {puntos_invalidos}'
  )
  # Refrescar la ventana (clave para tiempo real)
  fig.canvas.draw()
  fig.canvas.flush_events()
  # TODO [Visión]: implementar captura automática cada N frames
+ if frame_count % 50 == 0:
+                fig.savefig('docs/capturas/live_view.png')
+                print(f'[INFO] Captura guardada automáticamente en frame {frame_count}')
  except KeyboardInterrupt:
  #detenemos la salida por consola cuando el usuario pulsa Ctrl+C
  print('\n[INFO] Detenido por el usuario (Ctrl+C)')
