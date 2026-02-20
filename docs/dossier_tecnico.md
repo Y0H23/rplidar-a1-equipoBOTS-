@@ -3,7 +3,32 @@
 
 
 
+## LIDAR (Líder): 
+## Arquitectura del Driver, Módulo Compartido y Gestión de Calidad
 
+### 1. Especificaciones Técnicas del Sensor
+El sistema se basa en el sensor RPLIDAR A1M8, un escáner 2D de 360° que utiliza triangulación láser infrarroja para la medición de distancias.
+* **Tecnología**: Triangulación láser IR + ToF, 2D.
+* **Rango de Operación**: Desde 0.15 m hasta 12 m (típico 6 m en interiores).
+* **Frecuencia de Muestreo**: Hasta 8,000 muestras por segundo.
+* **Velocidad de Rotación**: Configurable entre 1-10 Hz (típico 5-6 Hz).
+* **Precisión**: ±1% para distancias menores a 6 metros.
+* **Dato de salida**: Cada punto entrega (quality, angle_deg, dist_mm).
+
+### 2. Arquitectura de Software y Contrato de Interfaz
+Como núcleo técnico del sistema, se ha desarrollado el módulo compartido `lidar_processing.py`. Este archivo actúa como el "contrato" único para garantizar que todas las especialidades trabajen con datos coherentes y tipos de datos normalizados.
+* **Módulo Compartido**: Define funciones puras para validación (`is_valid`), conversión de coordenadas (`polar_to_xy`) y filtrado masivo (`filter_and_project`).
+* **Robustez del Driver**: El archivo `lidar_driver.py` gestiona la comunicación UART a 115,200 bps y encapsula la lógica de los frames de escaneo.
+* **Gestión de Frames**: El generador de frames añade marcas de tiempo Unix (timestamp) a cada barrido completo de 360°.
+
+
+
+### 3. Gestión de Calidad y Troubleshooting
+Para asegurar la fiabilidad de los datos y la integridad del hardware, se aplican filtros técnicos y protocolos de resolución de problemas:
+* **Filtros de Calidad**: Se establece un umbral mínimo de calidad (`QUALITY_MIN = 20`) en el módulo de procesamiento para descartar lecturas ruidosas.
+* **Rango de Seguridad**: Solo se procesan muestras dentro del rango de 0.20 m a 10.0 m para evitar colisiones o lecturas fuera de límites.
+* **Alimentación**: Si el motor no arranca, se debe usar un puerto USB 3.0 directo para garantizar los 500 mA requeridos por el bus.
+* **Parada Segura**: Implementación obligatoria del orden `stop()` -> `stop_motor()` -> `disconnect()` para proteger la vida útil del motor de rotación.
 
 ## Actuadores: 
 ## Operación Segura, Diagrama FSM y Checklist
