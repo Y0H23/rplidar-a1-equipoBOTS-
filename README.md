@@ -65,7 +65,7 @@ Formato: t, quality, angle_deg, dist_mm
 4. Uso sin sensor 
 
 Visualizar CSV: python src/view_live_csv.py --csv data/scan_720.csv --animate
-
+Visualizar modo polar: python src/view_live_csv.py --csv data/scan_720.csv --animate --polar
 Procesar CSV y generar informe: python src/record_scan_csv.py --csv data/scan_720.csv --out docs
 
 Se generan:
