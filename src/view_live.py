@@ -1,7 +1,7 @@
 """
 view_live.py
 Visualización en tiempo real del RPLIDAR A1M8.
-Propietario: Visión Artificial.
+Propietario: Visión Artificial (marisa lozano).
 Cómo funciona la visualización en tiempo real con matplotlib:
  - plt.ion() activa el modo interactivo (no bloquea el hilo)
  - fig.canvas.draw() + fig.canvas.flush_events() refresca la ventana
