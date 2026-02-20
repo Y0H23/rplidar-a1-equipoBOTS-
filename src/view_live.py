@@ -38,9 +38,13 @@ def polar_to_xy(pts):
 
  #proyección a cartesianas con la coordenada X que es: distancia x coseno del ángulo
  x = r * np.cos(ang)
+ #proyección a cartesianas con la coordenada Y que es la distancia por el seno del ángulo
  y = r * np.sin(ang)
+ #devolvemos las tres matrices, coordenadas X e Y, y la calidad original
  return x, y, q
+ 
   def main():
+   #leemos los parametros
  ap = argparse.ArgumentParser(description='Visualización en tiempo real
 RPLIDAR')
  ap.add_argument('--port', required=True, help='Puerto serie
@@ -48,17 +52,24 @@ RPLIDAR')
  ap.add_argument('--range', type=float, default=6.0, help='Rango máximo a
 mostrar (metros)')
  args = ap.parse_args()
+ 
  # Inicializar driver y ventana matplotlib
  driver = LidarDriver(args.port)
  plt.ion() # modo interactivo: no bloquea
+ #creamos la figura y los ejes con un tamaño cuadrado 7x7
  fig, ax = plt.subplots(figsize=(7, 7))
+ #mantenemos proporciones 1:1 para no deformar la vista
  ax.set_aspect('equal', 'box')
+ #establecemos los límites de los ejes con en el argumento range
  ax.set_xlim(-args.range, args.range)
  ax.set_ylim(-args.range, args.range)
-       ax.set_title('RPLIDAR A1M8 — Vista en tiempo real')
+ #etiquetas de la interfaz grafica
+ ax.set_title('RPLIDAR A1M8 — Vista en tiempo real')
  ax.set_xlabel('X (m) → frente del sensor')
  ax.set_ylabel('Y (m) → izquierda del sensor')
+ #añadimos una cuadrícula de fondo semitransparente para estimar distancias de manera visual
  ax.grid(True, alpha=0.3)
+ #seleccionamos el punto (0,0) con un triángulo rojo para representar la ubicacion física del sensor
  ax.plot(0, 0, 'r^', markersize=10, label='Sensor') # posición del sensor
  ax.legend()
  # Scatter vacío que actualizaremos en cada frame
@@ -68,8 +79,11 @@ mostrar (metros)')
  fontsize=9, color='white',
  bbox=dict(boxstyle='round', facecolor='black', alpha=0.5))
  frame_count = 0
+ 
  try:
+ #driver.frames() es un generador que nos da barridos de 360 grados
  for fr in driver.frames():
+ #transforma datos polares del sensor a cartesianos para la pantalla:
  x, y, q = polar_to_xy(fr.pts)
  # Actualizar puntos en el scatter
  scat.set_offsets(np.c_[x, y])
@@ -85,8 +99,11 @@ mostrar (metros)')
  fig.canvas.flush_events()
  # TODO [Visión]: implementar captura automática cada N frames
  except KeyboardInterrupt:
+ #detenemos la salida por consola cuando el usuario pulsa Ctrl+C
  print('\n[INFO] Detenido por el usuario (Ctrl+C)')
  finally:
+ #parada segura obligatoria para evitar que el motor siga girando
  driver.shutdown_safe() # SIEMPRE parar el sensor al salir
+ #ejecuta script:
  if __name__ == '__main__':
  main()
