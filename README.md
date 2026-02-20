@@ -10,6 +10,8 @@ Permite:
 - Generación de métricas e informe reproducible.
 
 
+
+
 1. Requisitos
 
 - Python 3.10+
@@ -17,6 +19,8 @@ Permite:
 Puerto serie:
 Linux/Mac → /dev/ttyUSB0
 Windows → COM5
+
+
 
 
 2. Instalación
@@ -37,6 +41,8 @@ numpy
 matplotlib
 
 
+
+
 3. Uso con sensor
    
 Visualización en tiempo real
@@ -54,18 +60,25 @@ Se genera: data/scan_YYYYMMDD_HHMMSS.csv
 Formato: t, quality, angle_deg, dist_mm
 
 
+
+
 4. Uso sin sensor 
 
 Visualizar CSV: python src/view_live_csv.py --csv data/scan_720.csv --animate
+
 Procesar CSV y generar informe: python src/record_scan_csv.py --csv data/scan_720.csv --out docs
 
 Se generan:
 docs/filtered_points.csv, docs/invalid_points.csv, docs/report_scan.md
 
 
+
+
 5. Formato del CSV de referencia
 
 Header obligatorio: quality,angle,measure_m,ok
+
+
 
 
 6. Parada segura
@@ -77,6 +90,8 @@ stop()
 stop_motor()
 disconnect()
 Esto evita daños en el motor del sensor.
+
+
 
 
 7. Reproducibilidad
